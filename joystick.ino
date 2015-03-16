@@ -20,12 +20,13 @@ unsigned long msg;
 
 void setup() {
   Serial.begin(9600);
-  time1 = micros();
+  time1 = millis();
 }
 
 void loop() {
   xVal = analogRead(xPin);
   yVal = analogRead(yPin);
+  
   // ADC provides a 10-bit value, but only upper 6 bits are reliable due to joystick hardware
   // Without discarding the lower bits, we will get varied readings even when physical position is unchanged
   xVal = xVal >> 4;
@@ -39,9 +40,10 @@ void loop() {
       (yVal != yPrevVal) |
       (but1State != but1PrevState) |
       (but2State != but2PrevState)) {
-    time2 = micros() - time1; // overflows of this value are OK since they will still be very high
+    time2 = millis() - time1;
     msg = makeMsg(xVal, yVal, but1State, but2State, time2);
-    /* 
+    
+    /*
     Serial.print("time=");
     Serial.print(time2);
     Serial.print(", x=");
@@ -54,8 +56,8 @@ void loop() {
     Serial.print(! but2State);
     Serial.print(", msg=");
     */
-    Serial.println(msg, BIN);
-    time1 = micros();
+    Serial.println(msg, HEX);
+    time1 = millis();
     
     xPrevVal = xVal;
     yPrevVal = yVal;
@@ -65,11 +67,12 @@ void loop() {
 }
 
 unsigned long makeMsg(int xVal, int yVal, boolean but1State, boolean but2State, unsigned long time2) {
-  unsigned long msg = time2 << 14; // keep only lower 14 bits
+  unsigned long msg = time2 << 14; // discard upper 14 bits of time
   msg += ((! but2State) << 13); // inverted logic
   msg += ((! but1State) << 12); // inverted logic
   msg += (yVal << 6);
   msg += xVal;
   return msg;
 }
+
 
